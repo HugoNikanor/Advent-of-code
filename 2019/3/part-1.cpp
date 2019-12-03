@@ -8,7 +8,20 @@ struct point { int x, y;
 		               this->y + that.y };
 
 	}
+
+	point operator- (const point& that) {
+		return point { this->x - that.x,
+		               this->y - that.y };
+	}
+
+	friend ostream& operator<< (ostream&, point&);
 };
+
+ostream& operator<< (ostream& out, point& p) {
+	out << "p{" << p.x << ", " << p.y << "}";
+	return out;
+}
+
 struct cable_move {
 	directions dir;
 	int len = 0;
@@ -81,8 +94,55 @@ cable_move* parse_move () {
 
 	cout << "min_y = " << min_y << ", max_y = " << max_y
 		<< ", min_x = " << min_x << ", max_x = " << max_x << endl;
+	/*
+min_y = -4687, max_y = 1833, min_x = -7900, max_x = 3339
+min_y = -1872, max_y = 5673, min_x = -2385, max_x = 8124
+	 */
 
 	return root;
+}
+
+bool arr[10361][16025];
+point origin { 7900, 4687 };
+
+void color (cable_move* root) {
+	point cursor = origin;
+
+	for (cable_move* c = root; c != nullptr; c = c->next) {
+		for (int i = 0; i < c->len; i++) {
+			switch (c->dir) {
+				case U: ++cursor.y; break;
+				case D: --cursor.y; break;
+				case L: --cursor.x; break;
+				case R: ++cursor.x; break;
+			}
+			arr[cursor.y][cursor.x] = true;
+		}
+	}
+
+}
+
+vector<point> find_pts (cable_move* root) {
+	point cursor = origin;
+
+	vector<point> pts;
+
+	for (cable_move* c = root; c != nullptr; c = c->next) {
+		for (int i = 0; i < c->len; i++) {
+			switch (c->dir) {
+				case U: ++cursor.y; break;
+				case D: --cursor.y; break;
+				case L: --cursor.x; break;
+				case R: ++cursor.x; break;
+			}
+			if (arr[cursor.y][cursor.x]) {
+				point n = cursor;
+				pts.push_back(n);
+			}
+		}
+	}
+
+	return pts;
 }
 
 int main () {
@@ -90,8 +150,21 @@ int main () {
 	cin.tie(NULL);
 
 	auto* c1 = parse_move ();
-
 	auto* c2 = parse_move ();
+
+
+	color ( c1);
+	auto res = find_pts ( c2);
+
+	int min_manhatan = INT_MAX;
+	for (auto i : res) {
+		point p = (i - origin);
+		int manhatan = abs(p.x) + abs(p.y);
+		min_manhatan = min(min_manhatan, manhatan);
+		cout << i << " | " << p << " | " << manhatan << endl;
+	}
+
+	cout << "min manhatan = " << min_manhatan << endl;
 
 	return 0;
 }
