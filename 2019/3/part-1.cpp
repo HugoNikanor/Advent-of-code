@@ -2,7 +2,8 @@
 using namespace std;
 
 enum directions { U, D, L, R };
-struct point { int x, y;
+struct point { int x, y; unsigned int steps = 0;
+
 	point operator+ (struct point& that) {
 		return point { this->x + that.x,
 		               this->y + that.y };
@@ -102,11 +103,13 @@ min_y = -1872, max_y = 5673, min_x = -2385, max_x = 8124
 	return root;
 }
 
-bool arr[10361][16025];
+unsigned int arr[10361][16025];
 point origin { 7900, 4687 };
 
 void color (cable_move* root) {
 	point cursor = origin;
+
+	int steps = 0;
 
 	for (cable_move* c = root; c != nullptr; c = c->next) {
 		for (int i = 0; i < c->len; i++) {
@@ -116,7 +119,9 @@ void color (cable_move* root) {
 				case L: --cursor.x; break;
 				case R: ++cursor.x; break;
 			}
-			arr[cursor.y][cursor.x] = true;
+			++steps;
+			auto* ptr = &arr[cursor.y][cursor.x];
+			if (*ptr == 0) *ptr = steps;
 		}
 	}
 
@@ -127,6 +132,8 @@ vector<point> find_pts (cable_move* root) {
 
 	vector<point> pts;
 
+	unsigned int steps = 0, stops;
+
 	for (cable_move* c = root; c != nullptr; c = c->next) {
 		for (int i = 0; i < c->len; i++) {
 			switch (c->dir) {
@@ -135,8 +142,10 @@ vector<point> find_pts (cable_move* root) {
 				case L: --cursor.x; break;
 				case R: ++cursor.x; break;
 			}
-			if (arr[cursor.y][cursor.x]) {
+			++steps;
+			if ((stops = arr[cursor.y][cursor.x])) {
 				point n = cursor;
+				n.steps = stops + steps;
 				pts.push_back(n);
 			}
 		}
@@ -156,15 +165,13 @@ int main () {
 	color ( c1);
 	auto res = find_pts ( c2);
 
-	int min_manhatan = INT_MAX;
+	// int min_manhatan = INT_MAX;
+	unsigned int min_steps = INT_MAX;
 	for (auto i : res) {
-		point p = (i - origin);
-		int manhatan = abs(p.x) + abs(p.y);
-		min_manhatan = min(min_manhatan, manhatan);
-		cout << i << " | " << p << " | " << manhatan << endl;
+		min_steps = min (min_steps, i.steps);
 	}
 
-	cout << "min manhatan = " << min_manhatan << endl;
+	cout << "min steps = " << min_steps << endl;
 
 	return 0;
 }
