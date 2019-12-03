@@ -1,3 +1,7 @@
+/*
+ * Compile with `g++ -Wall this.cpp'
+ */
+
 #include <bits/stdc++.h>
 using namespace std;
 
