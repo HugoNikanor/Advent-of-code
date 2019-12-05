@@ -1,48 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
+#include <unistd.h>
 
 int mem[] = {
-	// 1, 0, 0, 0, 99
-
-	// 2,3,0,3,99
-
-	// 2,4,4,5,99,0
-
-	// 1,1,1,4,99,5,6,0,99
-
-/*
-	1  , 0   , 0   , 3   ,
-	1  , 1   , 2   , 3   ,
-	1  , 3   , 4   , 3   ,
-	1  , 5   , 0   , 3   ,
-	2  , 1   , 10  , 19  ,
-	1  , 6   , 19  , 23  ,
-	2  , 23  , 6   , 27  ,
-	2  , 6   , 27  , 31  ,
-	2  , 13  , 31  , 35  ,
-	1  , 10  , 35  , 39  ,
-	2  , 39  , 13  , 43  ,
-	1  , 43  , 13  , 47  ,
-	1  , 6   , 47  , 51  ,
-	1  , 10  , 51  , 55  ,
-	2  , 55  , 6   , 59  ,
-	1  , 5   , 59  , 63  ,
-	2  , 9   , 63  , 67  ,
-	1  , 6   , 67  , 71  ,
-	2  , 9   , 71  , 75  ,
-	1  , 6   , 75  , 79  ,
-	2  , 79  , 13  , 83  ,
-	1  , 83  , 10  , 87  ,
-	1  , 13  , 87  , 91  ,
-	1  , 91  , 10  , 95  ,
-	2  , 9   , 95  , 99  ,
-	1  , 5   , 99  , 103 ,
-	2  , 10  , 103 , 107 ,
-	1  , 107 , 2   , 111 ,
-	1  , 111 , 5   , 0   ,
-	99 , 2   , 14  , 0   , 0
-	*/
 
 	3,225,1,225,6,6,1100,1,238,225,
 	104,0,1101,86,8,225,1101,82,69,225,
@@ -115,19 +77,21 @@ int mem[] = {
 
 };
 
-int ogmem[sizeof(mem)];
-
 typedef enum opcode {
 	add = 1, // r1, r2, r3
 	mul = 2, // r1, r2, r3
 	get = 3,
 	put = 4,
+	jeq = 5, // jump if true
+	jnq = 6, // jump if false
+	lt = 7,  // less than
+	eq = 8,  // equal
 	halt = 99, //
 } opcode;
 
 typedef enum param_mode {
-	pos = 0,
-	dir = 1,
+	pos = 0, // position in memmory
+	dir = 1, // direct value
 } param_mode;
 
 int instr_width [halt + 1] = {
@@ -135,6 +99,10 @@ int instr_width [halt + 1] = {
 	[mul] = 4,
 	[get] = 2,
 	[put] = 2,
+	[jeq] = 3,
+	[jnq] = 3,
+	[lt]  = 4,
+	[eq]  = 4,
 	[halt] = 1,
 };
 
@@ -143,33 +111,12 @@ typedef struct instr {
 	int r1, r2, r3;
 } instr;
 
-#if 0
-void printmem (size_t len, int* mem) {
-	instr* in = (instr*) mem;
-	for (size_t i = 0; i < len / 4; i++) {
-		// cout << setw(3) << i << ": ";
-		switch (in->op) {
-			case add:  cout << "add"; break;
-			case mul:  cout << "mul"; break;
-			case halt: cout << "halt"; break;
-			default: cout << "?? " << in->op; break;
-		}
-		// cout << "\tr" << in->r1 << ",\tr" << in->r2 << ",\tr" << in->r3 << endl;
-		in++;
-	}
-	for (size_t i = 0; i < len % 4; i++) {
-		cout << mem[i + (len/4) * 4] << " ";
-	}
-	// cout << endl << "result = " << mem[0] << endl;
-}
-#endif
-
 #define PARAM_1(in)  (((in->op) / 100  ) % 10)
 #define PARAM_2(in)  (((in->op) / 1000 ) % 10)
 #define PARAM_3(in)  (((in->op) / 10000) % 10)
 #define GET_INSTR(in) ((in->op) % 100)
 
-#define debug
+// #define debug
 
 int run_asm () {
 	int* pc = mem;
@@ -181,20 +128,37 @@ int run_asm () {
 		/* Fetch next instruction */
 		in = (instr*) pc;
 
+#ifdef debug
+		printf("= %li %i, ", pc - mem, in->op);
+#endif
+
 		/* Handle adressing modes */
 		switch (GET_INSTR(in)) {
 			case add:
 			case mul:
+			case lt:
+			case eq:
 				switch (PARAM_3(in)) {
 					case pos: v3 = &mem[in->r3]; break;
 					case dir: v3 = &in->r3; break;
 				}
+#ifdef debug
+				printf("v3 = %i ", *v3);
+#endif
 
+			/* fallthrough */
+			case jeq:
+			case jnq:
 				switch (PARAM_2(in)) {
 					case pos: v2 = &mem[in->r2]; break;
 					case dir: v2 = &in->r2; break;
 				}
 
+#ifdef debug
+				printf("v2 = %i ", *v2);
+#endif
+
+			/* fallthrough */
 			case get:
 			case put:
 				switch (PARAM_1(in)) {
@@ -202,15 +166,41 @@ int run_asm () {
 					case dir: v1 = &in->r1; break;
 				}
 
-			case halt: ;
+#ifdef debug
+				printf("v1 = %i", *v1);
+#endif
+
+			/* fallthrough */
+			default: ;
+#ifdef debug
+				printf("\n");
+#endif
 		}
 
 		/* Do operation */
 		switch (GET_INSTR(in)) {
 			case add: *v3 = *v1 + *v2; break;
 			case mul: *v3 = *v1 * *v2; break;
-			case get: printf("> "); scanf("%i", v1); break;
+			case get:
+					  if (isatty(fileno(stdin))) printf("> ");
+					  scanf("%i", v1);
+					  break;
 			case put: printf("%i - ", *v1); break;
+			case jeq:
+				  if (*v1 != 0) {
+					  pc = mem;
+					  pc += *v2;
+					  continue;
+				  } else break;
+			case jnq:
+				  if (*v1 == 0) {
+					  pc = mem;
+					  pc += *v2;
+					  continue;
+				  } else break;
+
+			case lt: *v3 = *v1 < *v2; break;
+			case eq: *v3 = *v1 == *v2; break;
 			case halt: return mem[0];
 		}
 
@@ -223,32 +213,9 @@ int run_asm () {
 }
 
 int main () {
-	memcpy(ogmem, mem, sizeof(mem));
-
 	run_asm ();
 
 	printf("\n");
-
-	// run_asm(12, 2);
-
-	/*
-	int result;
-	for (int i = 0; i < 99; i++) {
-		for (int j = 0; j < 99; j++) {
-			memcpy(mem, ogmem, sizeof(mem));
-			cout << i << ", " << j << " = ";
-			result = run_asm(i, j);
-			cout << result << endl;
-			if (result == 19690720) {
-				cout << "100 * i + j = " << 100 * i + j << endl;
-				return 0;
-			} else if (result == -1) {
-				cout << "ERR\n";
-				return 1;
-			}
-		}
-	}
-	*/
 
 	return 1;
 }
