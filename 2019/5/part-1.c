@@ -84,8 +84,8 @@ typedef enum opcode {
 	put = 4,
 	jeq = 5, // jump if true
 	jnq = 6, // jump if false
-	lt = 7,  // less than
-	eq = 8,  // equal
+	lt  = 7,  // less than
+	eq  = 8,  // equal
 	halt = 99, //
 } opcode;
 
@@ -106,6 +106,18 @@ int instr_width [halt + 1] = {
 	[halt] = 1,
 };
 
+char* instr_name [halt + 1] = {
+	[add] = "add",
+	[mul] = "mul",
+	[get] = "get",
+	[put] = "put",
+	[jeq] = "jeq",
+	[jnq] = "jnq",
+	[lt]  = "lt",
+	[eq]  = "eq",
+	[halt] = "halt",
+};
+
 typedef struct instr {
 	opcode op;
 	int r1, r2, r3;
@@ -116,7 +128,7 @@ typedef struct instr {
 #define PARAM_3(in)  (((in->op) / 10000) % 10)
 #define GET_INSTR(in) ((in->op) % 100)
 
-// #define debug
+#define debug
 
 int run_asm () {
 	int* pc = mem;
@@ -129,7 +141,7 @@ int run_asm () {
 		in = (instr*) pc;
 
 #ifdef debug
-		printf("= %li %i, ", pc - mem, in->op);
+		printf("=%04li:\t%s,\t", pc - mem, instr_name[GET_INSTR(in)]);
 #endif
 
 		/* Handle adressing modes */
@@ -143,7 +155,9 @@ int run_asm () {
 					case dir: v3 = &in->r3; break;
 				}
 #ifdef debug
-				printf("v3 = %i ", *v3);
+				printf("v3 = ");
+				printf(PARAM_3(in) == pos ? "mem[%i]" : "%i", *v3);
+				printf("\t");
 #endif
 
 			/* fallthrough */
@@ -155,7 +169,9 @@ int run_asm () {
 				}
 
 #ifdef debug
-				printf("v2 = %i ", *v2);
+				printf("v2 = ");
+				printf(PARAM_2(in) == pos ? "mem[%i]" : "%i", *v2);
+				printf("\t");
 #endif
 
 			/* fallthrough */
@@ -167,7 +183,8 @@ int run_asm () {
 				}
 
 #ifdef debug
-				printf("v1 = %i", *v1);
+				printf("v1 = ");
+				printf(PARAM_1(in) == pos ? "mem[%i]" : "%i", *v1);
 #endif
 
 			/* fallthrough */
