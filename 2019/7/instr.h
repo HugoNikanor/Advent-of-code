@@ -1,4 +1,5 @@
 typedef enum opcode {
+	err = 0, // force error out of program
 	add = 1, // r1, r2, r3
 	mul = 2, // r1, r2, r3
 	get = 3,
@@ -16,6 +17,7 @@ typedef enum param_mode {
 } param_mode;
 
 int instr_width [halt + 1] = {
+	[err] = 1,
 	[add] = 4,
 	[mul] = 4,
 	[get] = 2,
@@ -28,6 +30,7 @@ int instr_width [halt + 1] = {
 };
 
 char* instr_name [halt + 1] = {
+	[err] = "err",
 	[add] = "add",
 	[mul] = "mul",
 	[get] = "get",
