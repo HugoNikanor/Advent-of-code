@@ -90,7 +90,8 @@ void run_asm (proc* p) {
 	printf("Code reached end\n");
 }
 
-#include "prog7_test.h"
+// #include "prog7_test.h"
+#include "prog7.h"
 
 int main () {
 	// run_asm ();
@@ -118,9 +119,6 @@ int main () {
 							| (c + 5) << (4 * 2)
 							| (d + 5) << 4
 							| (e + 5);
-
-						printf("n = %x\n", temp_pos);
-
 
 						for (int i = 0; i < 5; i++) {
 							fifo_reset(&fifos[i]);
@@ -196,13 +194,15 @@ int main () {
 
 						}	
 
-						int r1;
-						fifo_get(&fifos[4], &r1);
-
-						// printf("r = %i\n", r1);
-
 						head.next = NULL;
 						tail = &head;
+
+						int r1;
+						int status;
+						if ((status = fifo_get(&fifos[0], &r1))) {
+							printf("Read error %x\n", status);
+						}
+
 
 						if (r1 > maxval) {
 							maxval = r1;

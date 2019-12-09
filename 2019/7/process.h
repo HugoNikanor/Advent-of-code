@@ -67,7 +67,7 @@ struct proc* find_page () {
 	for (int i = 0; i < PAGES; i++) {
 		if (mem[i].proc.state == none) {
 			proc = (struct proc*) &mem[i];
-			current_page = i;
+			// current_page = i;
 			break;
 		}
 	}

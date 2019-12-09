@@ -6,6 +6,7 @@ typedef struct fifo {
 } fifo;
 
 void fifo_put(struct fifo* f, int data) {
+	f->len++;
 	f->data[f->write_ptr++] = data;
 }
 
@@ -13,15 +14,17 @@ int fifo_get(struct fifo* f, int* dest) {
 	if (f->read_ptr < f->write_ptr) {
 		*dest = f->data[f->read_ptr++];
 		// no error
+		--f->len;
 		return 0;
 	} else {
-		return 1;
+		return f->write_ptr << 4 | f->read_ptr;
 	}
 }
 
 void fifo_reset (struct fifo* f) {
 	f->read_ptr  = 0;
 	f->write_ptr = 0;
+	f->len = 0;
 
 	for (int i = 0; i < 0x10; i++) {
 		f->data[i] = 0;
