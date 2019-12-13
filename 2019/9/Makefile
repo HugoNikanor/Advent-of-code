@@ -1,4 +1,12 @@
 .PHONE: all
 CFLAGS=-Wall -Wextra -pedantic -ggdb
+CFILES = $(wildcard *.c)
+OFILES = $(CFILES:*.c=obj/*.o)
 
-all: part-1
+all: main
+
+main: $(OFILES)
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+obj/%.o: %.c
+	$(CC) $(CFLAGS) -o $@ $<
