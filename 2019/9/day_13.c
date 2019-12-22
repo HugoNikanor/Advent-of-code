@@ -8,6 +8,7 @@
 #include "fifo.h"
 #include "process.h"
 #include "ioport.h"
+#include "gpu_port.h"
 
 #define debug 0
 
@@ -101,7 +102,7 @@ void run_asm (proc* p) {
 // #include "prog7.h"
 // #include "quine.h"
 // #include "16digit.h"
-#include "prog/prog9.h"
+#include "prog/prog13.h"
 
 int main () {
 	// run_asm ();
@@ -113,7 +114,11 @@ int main () {
 	struct pipe iopipe;
 	make_ioport (&iopipe);
 
-	create_process(prog_size, prog, &iopipe, &iopipe);
+	struct gpu_port gpu_port = { 0 };
+	make_gpu_port (&gpu_port);
+
+	// create_process(prog_size, prog, (struct pipe*) &iopipe, (struct pipe*) &gpu_port);
+	create_process(prog_size, prog, (struct pipe*) &gpu_port, (struct pipe*) &gpu_port);
 
 	struct process_list_link* link = &head;
 	while (head.next != NULL) {
@@ -169,6 +174,10 @@ int main () {
 		}	
 
 	}	
+
+	// int64_t dest;
+	// gpu_port.proc.get((struct pipe*) &gpu_port, &dest);
+	// printf(" tiles = %li\n", dest); 
 
 	head.next = NULL;
 	tail = &head;
