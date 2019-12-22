@@ -15,6 +15,8 @@ struct pipe {
 	struct pipe_proc proc;
 };
 
+/* --- */
+
 struct fifo {
 	struct pipe_proc proc;
 	int data[0x100];

@@ -1,5 +1,7 @@
 #include "ioport.h"
 
+#include <stdio.h>
+
 void port_put(struct pipe* p, int64_t data) {
 	(void) p;
 	printf("%li ", data);
