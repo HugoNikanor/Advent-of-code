@@ -1,0 +1,4 @@
+> deps.mk
+echo "C_FILES := $(find -type f -name \*.c | tr '\n' ' ')" >> deps.mk
+echo 'O_FILES := $(C_FILES:.c=.o)' >> deps.mk
+find -type f -name \*.c -exec cpp -M {} \; >> deps.mk
