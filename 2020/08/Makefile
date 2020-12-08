@@ -1,5 +1,7 @@
 .PHONY: all clean
 
+CFLAGS := -Wall -pedantic -std=c99
+
 all: asm
 
 include deps.mk

@@ -29,7 +29,11 @@ int main() {
 
 	printf("Got %d lines\n", current);
 
-	printf("ac = %d\n", eval(operations));
+	int ret;
+	int status = eval(operations, &ret);
+	if (status == 0) {
+		printf("end! ac = %d\n", ret);
+	}
 
 }
 
