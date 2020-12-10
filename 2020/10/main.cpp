@@ -6,30 +6,31 @@
 
 int main () {
 
-	std::priority_queue<int, std::vector<int>, std::greater<int>> q;
+	std::priority_queue<int64_t> q;
 
-	int v;
+	int64_t v;
 	while (! std::cin.eof()) {
 		std::cin >> v;
 		q.push(v);
 	}
 
-	int counts[4] = { 0 };
+	q.push(0);
+	
+	int64_t max = q.top();
+	std::vector<int64_t> steps (max + 4, 0);
+	steps[max + 3] = 1;
 
-	int last = 0;
 	while (! q.empty()) {
-		int v = q.top();
+		int64_t v = q.top();
 		q.pop();
-		// std::cout << "v = " << v << ", last = " << last << std::endl;
-		counts[v - last] += 1;
-		last = v;
-	}
-	++counts[3];
 
-	for (int i = 0; i < 4; i++) {
-		std::cout << "counts[" << i << "] = " << counts[i] << std::endl;
+		steps[v] = 0; /* not setting this gives answer * 2 ... */
+		for (int64_t i = 1; i <= 3; i++) {
+			steps[v] += steps[v + i];
+		}
 	}
-	std::cout << counts[1] * counts[3] << std::endl;
+
+	std::cout << steps[0] << std::endl;
 
 	return 0;
 }
