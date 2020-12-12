@@ -12,27 +12,30 @@
 (call-with-values
     (lambda ()
       (let loop ((position 0+0i)
-                 (direction 1+0i ))
+                 (waypoint 10+i))
         (let ((line (read-line)))
-          (format #t "position = ~a, direction = ~a~%"
-                  position direction)
+          (format #t "position = ~a, waypoint = ~a~%"
+                  position waypoint)
           (if (eof-object? line)
-              (values position direction)
+              (values position waypoint)
               (let ((cmd (string-ref line 0))
                     (num (string->number (string-drop line 1))))
                 (case cmd
                   ((#\F)
-                   (loop (+ position (* num direction))
-                         direction))
+                   (loop (+ position (* num waypoint))
+                         waypoint))
                   ((#\L #\R)
                    (loop position
-                         (* direction
+                         (* waypoint
                             (expt (assoc-ref directions cmd)
                                   (/ num 90))
                             )))
                   ((#\N #\S #\E #\W)
-                   (loop (+ position (* num (assoc-ref directions cmd)))
-                         direction))))))))
+                   (loop position
+                         (+ waypoint
+                            (* num
+                               (assoc-ref directions cmd)))
+                         ))))))))
   (lambda (position direction)
     (format #t "position = ~a, direction = ~a~%"
             position direction)
