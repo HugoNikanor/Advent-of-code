@@ -51,16 +51,95 @@
                   )
                 ))))))
 
+(define (lex2 str)
+  (with-input-from-string str
+    (lambda ()
+
+      (let loop ((n 0))
+        (let ((c (read-char)))
+          (cond ((or (eof-object? c)
+                     (char=? c #\)))
+                 (list n))
+
+                ((char=? c #\()
+                 (loop (loop 0)))
+
+                ((char=? c #\space)
+                 (cons n (loop 0)))
+
+                ((char-set-contains? char-set:digit c)
+                 (loop (+ (* n 10)
+                          (- (char->integer c)
+                             (char->integer #\0)))))
+
+                ((memv c '(#\+ #\*))
+                 (loop (symbol c)))))))))
+
+(define (split-by lst delim)
+  (reverse
+    (let loop ((sublist '())
+               (lstlst '())
+               (lst lst))
+      (cond ((null? lst)
+             (cons sublist lstlst))
+            ((eqv? delim (car lst))
+             (loop '()
+                   (cons sublist lstlst)
+                   (cdr lst)))
+            (else
+              (loop (cons (car lst) sublist)
+                    lstlst
+                    (cdr lst)))))))
+
+(define order-of-operations 
+  (reverse '(+ *)))
+
+(define (parse2 tree)
+  (if (not (list? tree))
+    tree
+    (let loop ((ops order-of-operations)
+               (tree tree))
+      (display ops)
+      (display tree) (newline)
+      (cond ((not (list? tree)) tree)
+            ((null? tree) '(null))
+            ((null? ops) 
+             (if (list tree)
+               (parse2 (car tree))
+               tree))
+            (else 
+              (let ((groups (split-by tree (car ops))))
+                (cons (car ops)
+                      (map (lambda (sl)
+                             (if (= 1 (length sl))
+                               (if (not (list? (car sl)))
+                                 (car sl)
+                                 (parse2 (car sl)))
+                               (loop (cdr ops) sl)))
+                           groups
+                           ))))))))
+
+
+
 (define (main args)
-  (define numbers
-    (let loop ()
-      (let ((line (read-line)))
-        (if (eof-object? line)
-          '()
-          (cons (primitive-eval (lex line))
-                (loop))))))
+
+  (if (> 2 (length args))
+    (display "Usage: ./main (1 | 2) < input\n")
+    (let ((part (string->number (cadr args))))
+
+      (define numbers
+        (let loop ()
+          (let ((line (read-line)))
+            (if (eof-object? line)
+              '()
+              (cons (primitive-eval 
+                      (if (= 1 part)
+                        (lex line)
+                        (parse2 (lex2 line))))
+                    (loop))))))
 
 
-  (display numbers) (newline)
-  (display (apply + numbers)) (newline)
-  )
+      (display numbers) (newline)
+      (display (apply + numbers)) (newline)
+      )
+  ))
