@@ -35,6 +35,7 @@ int main() {
 	std::priority_queue<item> q;
 	q.push({ "", 0, 0 });
 
+	int path_count = 0;
 
 	while (! q.empty()) {
 
@@ -44,8 +45,9 @@ int main() {
 		q.pop();
 
 		if (x == 3 && y == 3) {
-			std::cout << "Found path!\n" << path << std::endl; 
-			break;
+			path_count += 1;
+			std::cout << "Found path! (" << path_count << ") of length " << path.length() << std::endl;
+			continue;
 		}
 
 		// std::cout << "\n" << x << ", " << y << " [" << path << "]" << std::endl;
