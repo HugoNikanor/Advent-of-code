@@ -59,19 +59,49 @@
                            (make-array #f 5 5)))
        boards))
 
+(define (fmt-bingo-card board)
+  (with-output-to-string
+    (lambda ()
+     (for-each
+      (lambda (y)
+        (for-each
+         (lambda (x)
+           (define value (list-ref (list-ref (bingo-board-source board) y) x))
+           (if (array-ref (bingo-board-marked-squares board) y x)
+               (format #t "|\x1b[41m~2@a\x1b[m " value)
+               (format #t "|~2@a " value)))
+         (iota 5))
+        (newline))
+      (iota 5)))))
+
 (define-values (board ball)
   (call/ec
    (lambda (return)
-     (for-each (lambda (ball)
-                 (format #t "~a~%" ball)
-                 (for-each (lambda (bingo-card)
-                             (when (play-ball bingo-card ball)
-                               (return bingo-card ball)))
-                           bingo-cards)
-                 )
-               balls))))
+     (let loop ((bingo-cards bingo-cards) (balls balls))
+       (format #t "~2@a, ~a~%" (car balls) (length bingo-cards))
+       (display
+        (string-join
+         (map (lambda (l) (string-join l "        "))
+              (apply map list
+                     (map (lambda (b) (string-split (fmt-bingo-card b) #\newline))
+                          bingo-cards)))
+         "\n" 'suffix))
+
+       (loop
+        (let inner ((bingo-cards bingo-cards)
+                    (remaining '()))
+          (if (null? bingo-cards)
+              remaining
+              (if (play-ball (car bingo-cards) (car balls))
+                  (if (and (null? remaining) (null? (cdr bingo-cards)))
+                      (return (car bingo-cards) (car balls))
+                      (inner (cdr bingo-cards) remaining))
+                  (inner (cdr bingo-cards) (cons (car bingo-cards) remaining)))))
+        (cdr balls))))))
 
 (define sum 0)
+
+
 
 (for-each
  (lambda (y)
@@ -90,6 +120,8 @@
 
 (format #t "~a x ~a = ~a~%"
         sum ball (* sum ball))
+
+;; 12360 is too high
 
 ;; (format #t "~y" boards)
 ;; (format #t "~y" balls)
