@@ -1,6 +1,7 @@
 (use-modules (ice-9 regex)
              (ice-9 rdelim)
              (ice-9 format)
+             (ice-9 match)
              (srfi srfi-41)
              (ice-9 streams))
 
@@ -39,10 +40,10 @@
   ((@ (srfi srfi-1) iota)
    (1+ (- (max from to) (min from to))) (min from to)))
 
-(define max-x (1+ (max (apply max (map end-x straight-lines))
-                       (apply max (map start-x straight-lines)))))
-(define max-y (1+ (max (apply max (map end-y straight-lines))
-                       (apply max (map start-y straight-lines)))))
+(define max-x (1+ (max (apply max (map end-x lines))
+                       (apply max (map start-x lines)))))
+(define max-y (1+ (max (apply max (map end-y lines))
+                       (apply max (map start-y lines)))))
 
 (format #t "max-x = ~a, max-y = ~a~%" max-x max-y)
 
@@ -50,23 +51,36 @@
 
 (format #t "~y" world)
 
+(define (line-range line)
+
+  (case (<=> (start-x line) (start-y line))
+    ((1) ;; start greater
+
+     )
+    ((0))
+    ((-1))
+    )
+
+  (if (< (start-x line)
+         (end-x line))
+      ;; else
+      )
+
+  (map (lambda (x)
+         (define m (min (start-y line) (end-y line)))
+         (cond ((= (start-y line) (end-y line)) (list x (start-y line)))
+               ((< (start-y line) (end-y line)) (list x (+ m x)))
+               (else (list x (- m x)))))
+       (range (start-x line) (end-x line))))
+
 (for-each (lambda (line)
             (format #t "line ~a~%" line)
-            (if (= (x (start line))
-                   (x (end line)))
-                (let ((x (start-x line)))
-                  (for-each (lambda (y)
-                              (array-set! world (1+ (array-ref world y x))
-                                          y x))
-                            (range (y (start line))
-                                   (y (end line)))))
-                (let ((y (start-y line)))
-                  (for-each (lambda (x)
-                              (array-set! world (1+ (array-ref world y x))
-                                          y x))
-                            (range (x (start line))
-                                   (x (end line)))))))
-          straight-lines)
+            (for-each (match-lambda
+                        ((x y)
+                         (array-set! world (1+ (array-ref world y x))
+                                     y x)))
+                      (line-range line)))
+          lines)
 
 
 (define count 0)
