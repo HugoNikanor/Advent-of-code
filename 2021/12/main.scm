@@ -28,17 +28,41 @@
 
 (define paths
   (let loop ((position 'start)
-             (visited '()))
+             (used-token? #f)
+             (visited '(start)))
     (if (eq? 'end position)
         '((end))
-        (concatenate
-         (map (lambda (x)
-                (map (lambda (path) (cons position path))
-                     (loop x
-                           (if (small? position)
-                               (cons position visited)
-                               visited))))
-              (remove (lambda (x) (memv x visited)) (hashq-ref graph position)))))))
+        (if used-token?
+            (concatenate
+             (map (lambda (x)
+                    (map (lambda (path) (cons position path))
+                         (loop x used-token?
+                               (if (small? x)
+                                   (cons x visited)
+                                   visited))))
+                  (remove (lambda (x) (memv x visited)) (hashq-ref graph position))))
+            ;; else
+            (append
+             ;; don't use token
+             (concatenate
+              (map (lambda (x)
+                     (map (lambda (path) (cons position path))
+                          (loop x used-token?
+                                (if (small? x)
+                                    (cons x visited)
+                                    visited))))
+                   (remove (lambda (x) (memv x visited)) (hashq-ref graph position))))
+             ;; use token
+             (concatenate
+              (map (lambda (x)
+                     (map (lambda (path) (cons position path))
+                          (loop x #t visited)))
+                   (remove (lambda (x) (memv x visited)) (hashq-ref graph position)))))
+
+            ))))
 
 
-(format #t "~y~%~a paths~%" paths (length paths))
+;; (format #t "~y~%~a paths~%" paths (length paths))
+(for-each (lambda (path)
+            (format #t "~a~%" (string-join (map symbol->string path) ",")))
+          paths)
