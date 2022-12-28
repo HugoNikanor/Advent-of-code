@@ -41,15 +41,15 @@ splitBy1 k xs = swap $ splitBy1' k xs
 -- leading space added to initial create configution lines
 -- line with create numbers removed
 
-data Move = Move Int Int deriving (Show, Eq)
+data Move = Move Int Int Int deriving (Show, Eq)
 
-parseMove :: String -> [Move]
+parseMove :: String -> Move
 parseMove line = let [_, count, _, from, _, to] = words line
-                  in replicate (read count) $ Move (read from - 1) (read to - 1)
+                  in Move (read count) (read from - 1) (read to - 1)
 
 doMove :: [Stack] -> Move -> [Stack]
-doMove stks (Move from to) = stks & ix to %~ ((head $ stks ^. ix from):)
-                                  & ix from %~ tail
+doMove stks (Move count from to) = stks & ix to %~ ((take count $ stks ^. ix from)<>)
+                                        & ix from %~ drop count
 
 main :: IO ()
 main = do
@@ -57,7 +57,7 @@ main = do
     let (crateLines, moves') = splitBy1 "" input
     let stacks :: [Stack] = fmap (fmap fromJust . filter isJust) $ transpose $ parseCrateLine <$> crateLines
     -- reverse crateLines
-    let moves = moves' >>= parseMove
+    let moves = parseMove <$> moves'
     let result = foldl doMove stacks moves
     print result
     putStrLn $ fmap head result
